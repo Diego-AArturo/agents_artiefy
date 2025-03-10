@@ -67,9 +67,9 @@ crew_class = Crew(
     language="spanish",
 )
 
-inputs = {
-    "prompt": "Quiero aprender sobre desarrollo de video juegos."
-}
+# inputs = {
+#     "prompt": "Quiero aprender sobre desarrollo de video juegos."
+# }
 
-result = crew_class.kickoff(inputs=inputs)
-print(result)
+# result = crew_class.kickoff(inputs=inputs)
+# print(result)

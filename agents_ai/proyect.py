@@ -141,7 +141,7 @@ crew = Crew(
         tarea_asignacion
         ],
     manager_agent=manager,
-    verbose=True,
+    # verbose=True,
     cache = True,
     language="Spanish",
     process=Process.hierarchical
@@ -177,21 +177,21 @@ inputs = {
 }
 
 # Start the crew's work
-result = crew.kickoff(inputs=inputs)
-print(result.pydantic.dict())
+# result = crew.kickoff(inputs=inputs)
+# print(result.pydantic.dict())
 
-tasks = result.pydantic.dict()['tasks']
-df_tasks = pd.DataFrame(tasks)
+# tasks = result.pydantic.dict()['tasks']
+# df_tasks = pd.DataFrame(tasks)
 
-# Display the DataFrame as an HTML table
-df_tasks.style.set_table_attributes('border="1"').set_caption("Task Details").set_table_styles(
-    [{'selector': 'th, td', 'props': [('font-size', '120%')]}]
-)
+# # Display the DataFrame as an HTML table
+# df_tasks.style.set_table_attributes('border="1"').set_caption("Task Details").set_table_styles(
+#     [{'selector': 'th, td', 'props': [('font-size', '120%')]}]
+# )
 
-milestones = result.pydantic.dict()['milestones']
-df_milestones = pd.DataFrame(milestones)
+# milestones = result.pydantic.dict()['milestones']
+# df_milestones = pd.DataFrame(milestones)
 
-# Display the DataFrame as an HTML table
-df_milestones.style.set_table_attributes('border="1"').set_caption("Task Details").set_table_styles(
-    [{'selector': 'th, td', 'props': [('font-size', '120%')]}]
-)
+# # Display the DataFrame as an HTML table
+# df_milestones.style.set_table_attributes('border="1"').set_caption("Task Details").set_table_styles(
+#     [{'selector': 'th, td', 'props': [('font-size', '120%')]}]
+# )

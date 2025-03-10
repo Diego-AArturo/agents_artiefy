@@ -124,9 +124,9 @@ crew_guia_cursos = Crew(
     language="spanish",
     
 )
-inputs = {
-    "curso": "Big Data y Análisis de Datos",
-    "pregunta": "que es big data?"
-}
-result = crew_guia_cursos.kickoff(inputs=inputs)
-print(result)
+# inputs = {
+#     "curso": "Big Data y Análisis de Datos",
+#     "pregunta": "que es big data?"
+# }
+# result = crew_guia_cursos.kickoff(inputs=inputs)
+# print(result)
