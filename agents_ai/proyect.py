@@ -1,11 +1,9 @@
-import os
-from crewai import Agent, Task, Crew, Process, LLM
-from dotenv import load_dotenv
+
+from crewai import Agent, Task, Crew, Process
 import pandas as pd
-from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
-from crewai.utilities import EmbeddingConfigurator
 from typing import List
 from pydantic import BaseModel, Field
+from config import llm
 
 class TaskEstimate(BaseModel):
     task_name: str = Field(..., description="Name of the task")
@@ -27,20 +25,15 @@ class TaskBreakdown(BaseModel):
     estimated_duration_hours: float = Field(..., description="Duración estimada en horas")
 
 
-load_dotenv()
-#os.environ['GEMINI_MODEL_NAME'] = 'gemini/gemini-1.5-flash'
-os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
-os.environ['OPENAI_MODEL_NAME'] = 'gpt-4o-mini'
-#GEMINI_API_KEY=os.getenv('api_gemini')
 
 planificador_proyecto = Agent(
     role="Planificador de Proyectos",
     goal="Desglosar meticulosamente el proyecto {project_type} en tareas accionables, asegurando que no se pase por alto ningún detalle y estableciendo cronogramas precisos alineados con los {project_objectives}.",
     backstory="Como un senior gestor de proyectos, has liderado numerosos proyectos exitosos en {industry}. Tu atención al detalle y pensamiento estratégico han garantizado siempre la entrega a tiempo y dentro del alcance. Ahora, tienes la tarea de planificar el próximo proyecto innovador {project_type}.",
     allow_delegation=False,
-    verbose=True,
+    # verbose=True,
     
-    # llm=llm
+    lm=llm
 )
 
 analista_estimacion = Agent(
@@ -48,8 +41,8 @@ analista_estimacion = Agent(
     goal="Proporcionar estimaciones altamente precisas de tiempo, recursos y esfuerzo para cada tarea del proyecto {project_type}, asegurando que se entregue de manera eficiente y dentro del presupuesto.",
     backstory="Eres el experto de referencia en estimación de proyectos en {industry}. Con una gran experiencia y acceso a datos históricos, puedes predecir con precisión los recursos necesarios para cualquier tarea, evitando retrasos innecesarios o sobrecostos.",
     allow_delegation=False,
-    verbose=True,
-    # llm=llm
+    # verbose=True,
+    llm=llm
 )
 
 estratega_asignacion = Agent(
@@ -57,14 +50,14 @@ estratega_asignacion = Agent(
     goal="Optimizar la asignación de tareas en el proyecto {project_type}, equilibrando las habilidades, disponibilidad y carga de trabajo del equipo para maximizar la eficiencia y el éxito del proyecto.",
     backstory="Con un profundo conocimiento de la dinámica de equipos y la gestión de recursos en {industry}, tienes un historial probado en la asignación eficiente de tareas, asegurando que cada miembro del equipo trabaje en la tarea más adecuada sin sobrecargarse.",
     allow_delegation=False,
-    verbose=True,
-    # llm=llm
+    # verbose=True,
+    llm=llm
 )
 
 tarea_desglose = Task(
     description="""
     Analizar cuidadosamente los requisitos del proyecto {project_type}
-    y desglosarlos en tareas individuales. Definir el alcance de cada tarea en detalle,
+    y desglosarlos en tareas individuales con una descrpcion detallada. Definir el alcance de cada tarea en detalle,
     establecer cronogramas alcanzables y asegurar que todas las dependencias sean consideradas para:
     
     {project_requirements}
@@ -73,10 +66,10 @@ tarea_desglose = Task(
     {team_members}
     """,
     expected_output="""
-    Una lista completa de tareas con descripciones detalladas, cronogramas,
+    Una lista completa de tareas con descripciones paso a paso detalladas, cronogramas,
     dependencias y entregables. Tu output final DEBE incluir un Gráfico Gantt
     o visualización de línea de tiempo similar específica para el {Project_type} Proyecto.""",
-    agents=[planificador_proyecto],
+    agent=planificador_proyecto,
     output_pydantic=TaskBreakdown  # ⬅ Definir salida estructurada
 )
 
@@ -91,7 +84,7 @@ tarea_estimacion = Task(
     para cada tarea in el proyecto {project_type}.
     Tu reporte final DEBE incluir un resumen de cualquier riesgo o incertidumbre
     asociado con la estimacion.""",
-    agents=[analista_estimacion],
+    agent=analista_estimacion,
     output_pydantic=TaskEstimate  # ⬅ Definir salida estructurada
 )
 
@@ -108,7 +101,7 @@ tarea_asignacion = Task(
     Un diagrama de asignación de recursos mostrando qué miembros del equipo son responsables de cada tarea
     en el proyecto {project_type}, junto con fechas de inicio y finalización. Tu output final DEBE incluir
     un resumen explicando la justificación detrás de cada decisión de asignación.""",
-    agents=[estratega_asignacion],
+    agent=estratega_asignacion,
     output_pydantic=ProjectPlan  # ⬅ Definir salida estructurada
 )
 manager = Agent(
@@ -125,8 +118,8 @@ manager = Agent(
     Tu enfoque es claro, preciso y siempre busca maximizar la productividad de la tripulación.
     """,
     allow_delegation=True,  # Permite asignar tareas automáticamente
-    verbose=True
-    # llm=llm
+    # verbose=True,
+    llm=llm
 )
 
 crew = Crew(
@@ -149,32 +142,32 @@ crew = Crew(
 
 
 
-project = 'Website'
-industry = 'Technology'
-project_objectives = 'Create a website for a small business'
-team_members = """
-- Diego Arturo (Project Manager, Web Developer)
+# project = 'Website'
+# industry = 'Technology'
+# project_objectives = 'Create a website for a small business'
+# team_members = """
+# - Diego Arturo (Project Manager, Web Developer)
 
-"""
-project_requirements = """
-- Create a responsive design that works well on desktop and mobile devices
-- Implement a modern, visually appealing user interface with a clean look
-- Develop a user-friendly navigation system with intuitive menu structure
-- Include an "About Us" page highlighting the company's history and values
-- Design a "Services" page showcasing the business's offerings with descriptions
-- Create a "Contact Us" page with a form and integrated map for communication
-- Implement a blog section for sharing industry news and company updates
-- Ensure fast loading times and optimize for search engines (SEO)
-- Integrate social media links and sharing capabilities
-- Include a testimonials section to showcase customer feedback and build trust
-"""
-inputs = {
-    'project_type': project,
-    'project_requirements': project_requirements,
-    'project_objectives': project_objectives,
-    'team_members': team_members,
-    'industry': industry
-}
+# """
+# project_requirements = """
+# - Create a responsive design that works well on desktop and mobile devices
+# - Implement a modern, visually appealing user interface with a clean look
+# - Develop a user-friendly navigation system with intuitive menu structure
+# - Include an "About Us" page highlighting the company's history and values
+# - Design a "Services" page showcasing the business's offerings with descriptions
+# - Create a "Contact Us" page with a form and integrated map for communication
+# - Implement a blog section for sharing industry news and company updates
+# - Ensure fast loading times and optimize for search engines (SEO)
+# - Integrate social media links and sharing capabilities
+# - Include a testimonials section to showcase customer feedback and build trust
+# """
+# inputs = {
+#     'project_type': project,
+#     'project_requirements': project_requirements,
+#     'project_objectives': project_objectives,
+#     'team_members': team_members,
+#     'industry': industry
+# }
 
 # Start the crew's work
 # result = crew.kickoff(inputs=inputs)

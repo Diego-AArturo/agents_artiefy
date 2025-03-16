@@ -1,56 +1,266 @@
-# Proyecto de Gestión de Tareas y Análisis de Contenido
 
-## Descripción
+# 📌 Documentación de la API
 
-Este proyecto utiliza la biblioteca `crewai` para gestionar tareas y analizar contenido de videos de YouTube y documentos PDF. El objetivo principal es desglosar proyectos en tareas accionables, estimar recursos y tiempos, y asignar tareas a los miembros del equipo de manera eficiente.
+Esta API permite a los usuarios obtener información sobre cursos, planificar proyectos y mantener conversaciones con un asistente virtual cuando los profesores no están disponibles.
 
-## Funcionalidades
-
-- **Análisis de Videos de YouTube**: Extrae información clave de videos de YouTube basándose en un prompt proporcionado.
-- **Análisis de Documentos PDF**: Responde preguntas basadas en la información contenida en documentos PDF.
-- **Gestión de Proyectos**: Desglosa proyectos en tareas individuales, estima recursos y tiempos, y asigna tareas a los miembros del equipo.
-- **Asignación de Recursos**: Optimiza la asignación de tareas según las habilidades y disponibilidad de los miembros del equipo.
-
-## Requisitos
-
-- Python 3.8 o superior
-- Bibliotecas Python:
-  - `crewai`
-  - `dotenv`
-  - `pydantic`
-
-## Instalación
+## 📂 Instalación y Configuración
 
 1. Clona el repositorio:
-   ```sh
-   git clone https://github.com/tu_usuario/tu_repositorio.git
-   cd tu_repositorio
+
+   ```bash
+   git clone <URL_DEL_REPOSITORIO>
+   cd <NOMBRE_DEL_PROYECTO>
    ```
+2. Instala los requerimientos:
 
-
-2. Crea un entorno virtual e instala las dependencias:
-
-   ```python
-   `source venv/bin/activate  # En Windows: venv\Scripts\activate
+   ```bash
    pip install -r requirements.txt
    ```
-3. Configura las variables de entorno en un archivo [.env](vscode-file://vscode-app/c:/Users/Diego%20Alejandro/AppData/Local/Programs/Microsoft%20VS%20Code/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html):
+3. Inicia el servidor:
 
-   **``api_gemini=tu_clave_de_api_de_gemini``**
+   ```bash
+   python app.py
+   ```
 
-## Uso
+   La API correrá en `http://localhost:5000/`.
 
-1. Asegúrate de que las variables de entorno estén configuradas correctamente en el archivo [.env](vscode-file://vscode-app/c:/Users/Diego%20Alejandro/AppData/Local/Programs/Microsoft%20VS%20Code/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html).
-2. Ejecuta el script principal:
+---
 
-   **python** **main.py**
+## 🔹 **Endpoints Disponibles**
 
-## Estructura del Código
+### 📘 **1. Obtener Clases Relacionadas con un Curso**
 
-* **Carga de Claves API** : Se cargan las claves API de Gemini y Google desde el archivo [.env](vscode-file://vscode-app/c:/Users/Diego%20Alejandro/AppData/Local/Programs/Microsoft%20VS%20Code/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html).
-* **Creación de LLM** : Se crea una instancia de [LLM](vscode-file://vscode-app/c:/Users/Diego%20Alejandro/AppData/Local/Programs/Microsoft%20VS%20Code/resources/app/out/vs/code/electron-sandbox/workbench/workbench.html) utilizando la clave API de Gemini.
-* **Creación de Herramientas** : Se configuran las herramientas para el análisis de videos de YouTube y documentos PDF.
-* **Definición de Agentes** : Se definen varios agentes con roles específicos, como investigador de contenido, asesor general, planificador de proyectos, analista de estimaciones y estratega de asignación.
-* **Definición de Tareas** : Se definen las tareas para desglosar proyectos, estimar recursos y tiempos, y asignar tareas.
-* **Gestión de Proyectos** : Se crea un agente de gestión de proyectos para coordinar las tareas del equipo.
-* **Ejecución del Proyecto** : Se inicia el trabajo del equipo con las entradas proporcionadas.
+``
+
+* Busca las clases de un curso específico y responde preguntas sobre ellas.
+
+#### **📌 Entrada esperada:**
+
+```json
+{
+    "curso": "mike course",
+    "prompt": "Crea un resumen de JUNTO A UN MUERTO"
+}
+```
+
+#### **🔹 Cómo consumirlo**
+
+##### **📌 Con Postman:**
+
+* Método: `POST`
+* URL: `http://localhost:5000/get_classes`
+* En **Body → raw → JSON** ingresa:
+  ```json
+  {
+      "curso": "mike course",
+      "prompt": "Crea un resumen de JUNTO A UN MUERTO"
+  }
+  ```
+* Presiona  **Send** .
+
+##### **📌 Con cURL:**
+
+```bash
+curl -X POST "http://localhost:5000/get_classes" \
+     -H "Content-Type: application/json" \
+     -d '{"curso": "mike course", "prompt": "Crea un resumen de JUNTO A UN MUERTO"}'
+```
+
+##### **📌 Con Python:**
+
+```python
+import requests
+
+url = "http://localhost:5000/get_classes"
+data = {
+    "curso": "mike course",
+    "prompt": "Crea un resumen de JUNTO A UN MUERTO"
+}
+
+response = requests.post(url, json=data)
+print(response.json())
+```
+
+---
+
+### 📗 **2. Obtener Cursos Relacionados con un Tema**
+
+``
+
+* Busca cursos relacionados con un tema específico.
+
+#### **📌 Entrada esperada:**
+
+```json
+{
+    "prompt": "desarrollo de videojuegos."
+}
+```
+
+#### **🔹 Cómo consumirlo**
+
+##### **📌 Con Postman:**
+
+* Método: `POST`
+* URL: `http://localhost:5000/root_courses`
+* En **Body → raw → JSON** ingresa:
+  ```json
+  {
+      "prompt": "desarrollo de videojuegos."
+  }
+  ```
+* Presiona  **Send** .
+
+##### **📌 Con cURL:**
+
+```bash
+curl -X POST "http://localhost:5000/root_courses" \
+     -H "Content-Type: application/json" \
+     -d '{"prompt": "desarrollo de videojuegos."}'
+```
+
+##### **📌 Con Python:**
+
+```python
+import requests
+
+url = "http://localhost:5000/root_courses"
+data = {
+    "prompt": "desarrollo de videojuegos."
+}
+
+response = requests.post(url, json=data)
+print(response.json())
+```
+
+---
+
+### 📙 **3. Planificación de un Proyecto**
+
+``
+
+* Genera un plan detallado para un proyecto basándose en los requisitos proporcionados.
+
+#### **📌 Entrada esperada:**
+
+```json
+{
+    "project_type": "Website",
+    "industry": "Technology",
+    "project_objectives": "Create a website for a small business",
+    "team_members": "- Diego Arturo (Project Manager, Web Developer)",
+    "project_requirements": "- Create a responsive design that works well on desktop and mobile devices"
+}
+```
+
+#### **🔹 Cómo consumirlo**
+
+##### **📌 Con Postman:**
+
+* Método: `POST`
+* URL: `http://localhost:5000/plan_project`
+* En **Body → raw → JSON** ingresa:
+  ```json
+  {
+      "project_type": "Website",
+      "industry": "Technology",
+      "project_objectives": "Create a website for a small business",
+      "team_members": "- Diego Arturo (Project Manager, Web Developer)",
+      "project_requirements": "- Create a responsive design that works well on desktop and mobile devices"
+  }
+  ```
+* Presiona  **Send** .
+
+##### **📌 Con cURL:**
+
+```bash
+curl -X POST "http://localhost:5000/plan_project" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "project_type": "Website",
+           "industry": "Technology",
+           "project_objectives": "Create a website for a small business",
+           "team_members": "- Diego Arturo (Project Manager, Web Developer)",
+           "project_requirements": "- Create a responsive design that works well on desktop and mobile devices"
+         }'
+```
+
+##### **📌 Con Python:**
+
+```python
+import requests
+
+url = "http://localhost:5000/plan_project"
+data = {
+    "project_type": "Website",
+    "industry": "Technology",
+    "project_objectives": "Create a website for a small business",
+    "team_members": "- Diego Arturo (Project Manager, Web Developer)",
+    "project_requirements": "- Create a responsive design that works well on desktop and mobile devices"
+}
+
+response = requests.post(url, json=data)
+print(response.json())
+```
+
+---
+
+### 📕 **4. Mantener una Conversación con un Chatbot**
+
+``
+
+* Permite interactuar con un chatbot que guarda historial de conversaciones.
+
+#### **📌 Entrada esperada:**
+
+```json
+{
+    "user_id": "123",
+    "user_message": "¿Cómo funciona la gestión de proyectos?",
+    "curso": "Gestión de proyectos"
+}
+```
+
+#### **🔹 Cómo consumirlo**
+
+##### **📌 Con Postman:**
+
+* Método: `POST`
+* URL: `http://localhost:5000/chat`
+* En **Body → raw → JSON** ingresa:
+  ```json
+  {
+      "user_id": "123",
+      "user_message": "¿Cómo funciona la gestión de proyectos?",
+      "curso": "Gestión de proyectos"
+  }
+  ```
+* Presiona  **Send** .
+
+##### **📌 Con cURL:**
+
+```bash
+curl -X POST "http://localhost:5000/chat" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "user_id": "123",
+           "user_message": "¿Cómo funciona la gestión de proyectos?",
+           "curso": "Gestión de proyectos"
+         }'
+```
+
+##### **📌 Con Python:**
+
+```python
+import requests
+
+url = "http://localhost:5000/chat"
+data = {
+    "user_id": "123",
+    "user_message": "¿Cómo funciona la gestión de proyectos?",
+    "curso": "Gestión de proyectos"
+}
+
+response = requests.post(url, json=data)
+print(response.json())
+```

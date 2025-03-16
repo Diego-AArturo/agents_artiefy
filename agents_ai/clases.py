@@ -1,132 +1,96 @@
-import os
-from crewai import Agent, Task, Crew, Process, LLM,Flow
-from crewai.flow.flow import listen, start
-from dotenv import load_dotenv
-from crewai_tools import PGSearchTool, PDFSearchTool
-from crewai.knowledge.source.pdf_knowledge_source import PDFKnowledgeSource
-from crewai.utilities import EmbeddingConfigurator
+
 from typing import List
-from pydantic import BaseModel, Field
-
-load_dotenv()
-os.environ['GEMINI_MODEL_NAME'] = 'gemini/gemini-1.5-flash'
-os.environ["OPENAI_API_KEY"] = os.getenv('OPENAI_API_KEY')
-os.environ['OPENAI_MODEL_NAME'] = 'gpt-4o-mini'
-
-GEMINI_API_KEY=os.getenv('api_gemini')
-# GOOGLE_API_KEY = os.getenv('api_google')
-# Option 2. Vertex AI IAM credentials for Gemini, Anthropic, and anything in the Model Garden.
-# https://cloud.google.com/vertex-ai/generative-ai/docs/overview
-
-llm = LLM(
-    model="gemini/gemini-1.5-flash",
-    api_key=GEMINI_API_KEY,
-    temperature=0.7
-)
-
-tooldb = PGSearchTool(
-    db_uri='postgresql://neondb_owner:6yCR0BKXOcrg@ep-morning-cloud-a55z1d5c-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require',
-    table_name='cursos'
-)
+from pydantic import BaseModel
+from crewai import Agent, Task, Crew, Process
+from tools.custom_tools import BDSearchTool
+from crewai_tools import PDFSearchTool
+from config import llm
 
 
-tooldb_clases = PGSearchTool(
-    db_uri='postgresql://neondb_owner:6yCR0BKXOcrg@ep-morning-cloud-a55z1d5c-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require',
-    table_name='lessons',
-    search_query="SELECT title, description, duration, resource_key FROM lessons WHERE course_id IN (SELECT id FROM courses WHERE title ILIKE '%{curso}%');"
-)
+bd_search_tool = BDSearchTool()
 
-pdf_tool = PDFSearchTool()
+#Definir salida de eventos
+class EventOutput(BaseModel):
+    events: List[str]
 
-# Agente para analizar las clases (lessons) dentro de un curso
-# Agente encargado de buscar clases dentro de un curso específico
+# Agente para analizar clases y extraer recursos
 analista_de_clases = Agent(
-    role="Asesor de Clases",
-    goal="Buscar todas las clases del curso {curso}, extrayendo descripción y recursos.",
-    backstory="Eres un experto en bases de datos con experiencia en la búsqueda académica.",
-    tools=[tooldb_clases]
+    role="Analista de bases de datos",
+    goal="Buscar todas las clases del curso {curso}, extrayendo la descripción y los recursos. Con base en la información, responder las preguntas {prompt}.",
+    backstory="Eres un profesor experto en bases de datos con experiencia en tutorías en {curso}.",
+    tools=[bd_search_tool],
+    max_iter=3,
+    llm=llm
 )
 
-# Agente para analizar recursos PDF asociados a las clases
-analista_de_recursos = Agent(
-    role="Analista de Recursos",
-    goal="Verificar si las clases del curso {curso} tienen PDFs en la columna 'resource_key' y extraer información.",
-    backstory="Eres un especialista en análisis de contenido digital y extracción de información de documentos PDF.",
-    tools=[tooldb_clases, pdf_tool]
-)
-
-# Agente para generar resúmenes y responder preguntas
-resumen_clases = Agent(
-    role="Redactor de clases",
-    goal="Analizar la información extraída de las clases del curso {curso} y generar un resumen estructurado.",
-    backstory="Eres un profesor experto en el curso {curso}, con habilidades en la síntesis de información.",
-)
-
-# Tarea para buscar clases dentro de un curso específico
 task_clases = Task(
     description="""
-    Buscar en la base de datos todas las clases del curso {curso}.
-    Extraer descripción y recursos de cada clase.
-    """,
-    expected_output="Lista con detalles de las clases en el curso {curso}.",
-    agents=[analista_de_clases],
+    Buscar en la base de datos todas las clases del curso {curso}. Extraer descripción y los URLs de recursos.
+
+    Luego, utilizando únicamente la información extraída de la base de datos,
+    responde a la siguiente pregunta: {prompt}.
+
+    Si la información extraída no contiene una respuesta clara, responde con:
+    "No hay suficiente información en la base de datos para responder esta pregunta".
+    """, 
+    expected_output="Lista de descripciones de clases y URLs de recursos.",
+    agent=analista_de_clases,
+    output_pydantic=EventOutput  
 )
 
-# Tarea para revisar los recursos de las clases y extraer PDFs si existen
-task_recursos = Task(
+#Agente para procesar PDFs
+lector_pdf = Agent(
+    role="Lector de PDF",
+    goal="Leer y procesar los PDFs de los recursos extraídos para responder preguntas.",
+    backstory="Eres un experto en la extracción de información de PDFs.",
+    max_iter=3,
+    llm=llm
+)
+
+#Herramienta PDF con URLs obtenidos de task_clases
+pdf_tool = PDFSearchTool(file_paths=[]) 
+
+# Tarea para procesar PDFs y responder preguntas
+task_responder = Task(
     description="""
-    Revisar la columna 'resource_key' en la base de datos de lessons para identificar recursos PDF.
-    Si hay archivos PDF, extraer el contenido y utilizarlo como fuente de información.
+    Usando exclusivamente la información contenida en los PDFs extraídos,
+    responde la siguiente pregunta: {prompt}.
+    
+    No uses información externa. Si la información obtenida no es suficiente,
+    responde con "No hay suficiente información en la base de datos para responder esta pregunta".
     """,
-    expected_output="Lista de recursos encontrados y contenido extraído de PDFs.",
-    agents=[analista_de_recursos],
+    expected_output="Respuesta específica basada en los PDFs analizados.",
+    agent=lector_pdf,
+    context=[task_clases],  
+    tools=[pdf_tool],  
 )
 
-# Tarea para resumir la información de las clases y responder preguntas
-task_resumen_clases = Task(
-    description="""
-    Generar un resumen de la información de las clases del curso {curso} utilizando los datos extraídos.
-    """,
-    expected_output="Resumen detallado del contenido de las clases en el curso {curso}.",
-    agents=[resumen_clases],
-)
-
-
+# Agente Manager
 manager = Agent(
-    role="Project Manager",
-    goal="""
-    Eres el lider del area de cursos y tutorias. tu objetivo es coordinar las tareas del equipo
-    de manera eficiente, asegurando que solo se ejecuten las necesarias segun el input del usuario. 
-    
-    """,
-    backstory="""
-    Eres un experto en tutorias y cursos con experiencia en la extraccion de informacion relevante
-    y en la redaccion de informes detallados. Tu objetivo es coordinar las tareas del equipo.
-    """,
-    allow_delegation=True,  # Permite asignar tareas automáticamente
-    # verbose=True
-    # llm=llm
+    role="Manager",
+    goal="Coordinar el flujo de información y responder preguntas basadas en la información extraída.",
+    backstory="Eres un experto en gestión del conocimiento y síntesis de información.",
+    max_iter=3
 )
 
+# Crew con flujo de trabajo optimizado
 crew_guia_cursos = Crew(
-    agents=[
-        analista_de_clases,
-        resumen_clases        
-        ],
-    tasks=[
-        task_clases,
-        task_resumen_clases
-        ],
-    manager_agent=manager,
+    agents=[analista_de_clases, lector_pdf],
+    tasks=[task_clases, task_responder],
     process=Process.hierarchical,
-    verbose=True,
-    cache = True,
-    language="spanish",
-    
+    manager_agent=manager,  # Manager supervisa el proceso y entrega la respuesta final
+    cache=True,
+    llm=llm
 )
+
+# Entrada del programa
 # inputs = {
-#     "curso": "Big Data y Análisis de Datos",
-#     "pregunta": "que es big data?"
+#     "curso": "mike course",
+#     "prompt": "Crea un resumen de JUNTO A UN MUERTO"
 # }
+
+# #Ejecutar el crew
 # result = crew_guia_cursos.kickoff(inputs=inputs)
-# print(result)
+
+# #Imprimir resultado final
+# print('Resultado:', result)

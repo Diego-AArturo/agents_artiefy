@@ -3,4 +3,8 @@
 /db
 /p.py
 knowledge
+/test.py
+/.files
+chatbot.db
+/pdf_resources
 __pycache__
