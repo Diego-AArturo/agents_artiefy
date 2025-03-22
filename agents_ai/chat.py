@@ -1,11 +1,12 @@
-
-from langchain.memory import ChatMessageHistory
 import sqlite3
 import json
-from config import chat
-from langchain.memory import ChatMessageHistory
-from langchain.schema import HumanMessage, AIMessage, SystemMessage
 
+from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain.schema import HumanMessage, AIMessage, SystemMessage
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from config import chat
 # Inicializar modelo de chat
 
 
@@ -24,22 +25,41 @@ conn.commit()
 
 def get_user_memory(user_id):
     """Carga el historial de un usuario desde la base de datos de forma segura."""
-    cursor.execute("SELECT messages FROM user_sessions WHERE user_id=?", (user_id,))
-    row = cursor.fetchone()
+    try:
+        cursor.execute("SELECT messages FROM user_sessions WHERE user_id=?", (user_id,))
+        row = cursor.fetchone()
 
-    if row and row[0]:  # Verifica que haya datos
+        if row is None or row[0] in [None, "", "null"]:
+            return ChatMessageHistory(messages=[])
+
+        raw_data = row[0]  # Datos originales en la BD
+        print(f"Datos crudos desde la BD ({user_id}): {raw_data}")  # Debug
+
         try:
-            messages = json.loads(row[0])  # Convertir de JSON a lista de mensajes
+            messages = json.loads(raw_data)  # Convertir JSON a lista de mensajes
         except json.JSONDecodeError:
-            messages = []  # Si hay un error en la conversión, se usa una lista vacía
-    else:
-        messages = []
+            print(f"Error de JSON en {user_id}, intentando corregir...")
+            messages = []
 
-    return ChatMessageHistory(messages=[HumanMessage(content=m["human"]) if "human" in m else AIMessage(content=m["ai"]) for m in messages])
+        return ChatMessageHistory(
+            messages=[
+                HumanMessage(content=m["content"]) if m["type"] == "human" else AIMessage(content=m["content"])
+                for m in messages
+            ]
+        )
+
+    except sqlite3.Error as e:
+        print(f"Error en la base de datos: {e}")
+        return ChatMessageHistory(messages=[])
 
 def save_user_memory(user_id, memory):
     """Guarda el historial del usuario en la base de datos."""
     messages = [{"human": msg.content} if isinstance(msg, HumanMessage) else {"ai": msg.content} for msg in memory.messages]
+    messages = [
+            {"type": "human", "content": msg.content} if isinstance(msg, HumanMessage) else 
+            {"type": "ai", "content": msg.content}
+            for msg in memory.messages
+        ]
     messages_str = json.dumps(messages)  # Convertir a JSON seguro
 
     cursor.execute("REPLACE INTO user_sessions (user_id, messages) VALUES (?, ?)", (user_id, messages_str))

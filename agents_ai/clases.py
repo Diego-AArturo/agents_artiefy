@@ -4,6 +4,11 @@ from pydantic import BaseModel
 from crewai import Agent, Task, Crew, Process
 from tools.custom_tools import BDSearchTool
 from crewai_tools import PDFSearchTool
+import sys
+import os
+from crewai.memory import LongTermMemory
+from crewai.memory.storage.ltm_sqlite_storage import LTMSQLiteStorage
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import llm
 
 
@@ -70,7 +75,9 @@ manager = Agent(
     role="Manager",
     goal="Coordinar el flujo de información y responder preguntas basadas en la información extraída.",
     backstory="Eres un experto en gestión del conocimiento y síntesis de información.",
-    max_iter=3
+    max_iter=3,
+    memory = True,
+
 )
 
 # Crew con flujo de trabajo optimizado
@@ -80,17 +87,25 @@ crew_guia_cursos = Crew(
     process=Process.hierarchical,
     manager_agent=manager,  # Manager supervisa el proceso y entrega la respuesta final
     cache=True,
-    llm=llm
+    llm=llm,
+    memory= True,
+    long_term_memory = LongTermMemory(
+        storage=LTMSQLiteStorage(
+            db_path="/my_crew1/long_term_memory_storage.db"
+        )
+    ),
 )
 
 # Entrada del programa
-# inputs = {
-#     "curso": "mike course",
-#     "prompt": "Crea un resumen de JUNTO A UN MUERTO"
-# }
+while True:
+    prompt = input('Prompt: ')
+    inputs = {
+        "curso": "mike course",
+        "prompt": prompt
+    }
 
-# #Ejecutar el crew
-# result = crew_guia_cursos.kickoff(inputs=inputs)
+    #Ejecutar el crew
+    result = crew_guia_cursos.kickoff(inputs=inputs)
 
-# #Imprimir resultado final
-# print('Resultado:', result)
+    #Imprimir resultado final
+    print('Resultado:', result)

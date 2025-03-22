@@ -15,8 +15,8 @@ from fpdf import FPDF
 import shutil
 from config import DOWNLOAD_FOLDER,PDF_FOLDER, DATABASE_URL, aws
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-
+import sqlite3
+import json
 
 
 
@@ -78,8 +78,27 @@ def convert_to_pdf(file_path: str) -> str:
         # print(f"Error al procesar {file_path}: {e}")
         return ""
     
-    
 
+def get_history(id):
+    try:
+        conn = sqlite3.connect('chatbot.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT messages FROM user_sessions WHERE user_id=?", (id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        raw_data = row[0]  # Datos originales en la BD
+        # print(f"Datos crudos desde la BD ({id}): {raw_data}")  # Debug
+
+        try:
+            messages = json.loads(raw_data)  # Convertir JSON a lista de mensajes
+        except json.JSONDecodeError:
+            print(f"Error de JSON en {id}, intentando corregir...")
+            messages = []
+        return messages
+        
+    except sqlite3.Error as e:
+        return str(e)
 
 class BDSearchTool(BaseTool):
     name: str = "BD Search Tool"  

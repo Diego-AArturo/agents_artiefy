@@ -1,6 +1,9 @@
 
 from crewai import Agent, Task, Crew, Process
 from tools.custom_tools import CourseRootTool
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import llm
 
 

@@ -4,6 +4,7 @@ from agents_ai.proyect import crew as project_crew
 from agents_ai.root_class import crew_class as courses_crew
 from agents_ai.clases import crew_guia_cursos as classes_crew
 from agents_ai.chat import chat_with_user 
+from tools.custom_tools import get_history
 app = Flask(__name__)
 CORS(app)
 
@@ -55,6 +56,15 @@ def chat():
         return jsonify({"result": str(result)}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route("/history", methods=["POST"])
+def get_chat_history():
+    try: 
+        history = get_history(id)
+        return jsonify({"history": history}), 200
+    except Exception as e: 
+        return jsonify({"error": str(e)}), 500
+
 
 # Ruta de prueba para verificar conexión
 @app.route("/", methods=["GET"])

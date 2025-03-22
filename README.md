@@ -1,4 +1,3 @@
-
 # 📌 Documentación de la API
 
 Esta API permite a los usuarios obtener información sobre cursos, planificar proyectos y mantener conversaciones con un asistente virtual cuando los profesores no están disponibles.
@@ -102,7 +101,7 @@ print(response.json())
 ##### **📌 Con Postman:**
 
 * Método: `POST`
-* URL: `http://localhost:5000/root_courses`
+* URL: `http://18.117.124.192:5000/root_courses`
 * En **Body → raw → JSON** ingresa:
   ```json
   {
@@ -114,7 +113,7 @@ print(response.json())
 ##### **📌 Con cURL:**
 
 ```bash
-curl -X POST "http://localhost:5000/root_courses" \
+curl -X POST "http://18.117.124.192:5000/root_courses" \
      -H "Content-Type: application/json" \
      -d '{"prompt": "desarrollo de videojuegos."}'
 ```
@@ -124,7 +123,7 @@ curl -X POST "http://localhost:5000/root_courses" \
 ```python
 import requests
 
-url = "http://localhost:5000/root_courses"
+url = "http://18.117.124.192:5000/root_courses"
 data = {
     "prompt": "desarrollo de videojuegos."
 }
@@ -158,7 +157,7 @@ print(response.json())
 ##### **📌 Con Postman:**
 
 * Método: `POST`
-* URL: `http://localhost:5000/plan_project`
+* URL: `http://18.117.124.192:5000/plan_project`
 * En **Body → raw → JSON** ingresa:
   ```json
   {
@@ -174,7 +173,7 @@ print(response.json())
 ##### **📌 Con cURL:**
 
 ```bash
-curl -X POST "http://localhost:5000/plan_project" \
+curl -X POST "http://18.117.124.192:5000/plan_project" \
      -H "Content-Type: application/json" \
      -d '{
            "project_type": "Website",
@@ -190,7 +189,7 @@ curl -X POST "http://localhost:5000/plan_project" \
 ```python
 import requests
 
-url = "http://localhost:5000/plan_project"
+url = "http://18.117.124.192:5000/plan_project"
 data = {
     "project_type": "Website",
     "industry": "Technology",
@@ -226,7 +225,7 @@ print(response.json())
 ##### **📌 Con Postman:**
 
 * Método: `POST`
-* URL: `http://localhost:5000/chat`
+* URL: `http://18.117.124.192:5000/chat`
 * En **Body → raw → JSON** ingresa:
   ```json
   {
@@ -240,7 +239,7 @@ print(response.json())
 ##### **📌 Con cURL:**
 
 ```bash
-curl -X POST "http://localhost:5000/chat" \
+curl -X POST "http://18.117.124.192:5000/chat" \
      -H "Content-Type: application/json" \
      -d '{
            "user_id": "123",
@@ -254,7 +253,7 @@ curl -X POST "http://localhost:5000/chat" \
 ```python
 import requests
 
-url = "http://localhost:5000/chat"
+url = "http://18.117.124.192:5000/chat"
 data = {
     "user_id": "123",
     "user_message": "¿Cómo funciona la gestión de proyectos?",

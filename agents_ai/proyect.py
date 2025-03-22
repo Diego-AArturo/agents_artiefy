@@ -3,6 +3,9 @@ from crewai import Agent, Task, Crew, Process
 import pandas as pd
 from typing import List
 from pydantic import BaseModel, Field
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import llm
 
 class TaskEstimate(BaseModel):
