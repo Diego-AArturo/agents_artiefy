@@ -10,6 +10,7 @@ from crewai.memory import LongTermMemory
 from crewai.memory.storage.ltm_sqlite_storage import LTMSQLiteStorage
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import llm
+from tools.memory import MemoryManager
 
 
 bd_search_tool = BDSearchTool()
@@ -96,16 +97,26 @@ crew_guia_cursos = Crew(
     ),
 )
 
-# Entrada del programa
-while True:
-    prompt = input('Prompt: ')
-    inputs = {
-        "curso": "mike course",
-        "prompt": prompt
-    }
 
-    #Ejecutar el crew
-    result = crew_guia_cursos.kickoff(inputs=inputs)
 
-    #Imprimir resultado final
-    print('Resultado:', result)
+
+def classes_crew(user_id, data):
+    agent_id = "classes"
+    
+    memory_manager = MemoryManager(user_id, agent_id)
+    memory_manager.add_user_message(data.get("prompt", "")) 
+      
+
+    # Aquí estás usando otra función que devuelve un objeto tipo respuesta
+    response = crew_guia_cursos.kickoff(inputs=data)
+
+    if hasattr(response, "raw"):
+        memory_manager.add_ai_message(response.raw)
+        result = response.raw
+    else:
+        result = str(response)
+        memory_manager.add_ai_message(result)
+
+    memory_manager.save()
+
+    return result

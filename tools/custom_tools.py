@@ -79,26 +79,6 @@ def convert_to_pdf(file_path: str) -> str:
         return ""
     
 
-def get_history(id):
-    try:
-        conn = sqlite3.connect('chatbot.db')
-        cursor = conn.cursor()
-        cursor.execute("SELECT messages FROM user_sessions WHERE user_id=?", (id,))
-        
-        row = cursor.fetchone()
-        conn.close()
-        raw_data = row[0]  # Datos originales en la BD
-        # print(f"Datos crudos desde la BD ({id}): {raw_data}")  # Debug
-
-        try:
-            messages = json.loads(raw_data)  # Convertir JSON a lista de mensajes
-        except json.JSONDecodeError:
-            print(f"Error de JSON en {id}, intentando corregir...")
-            messages = []
-        return messages
-        
-    except sqlite3.Error as e:
-        return str(e)
 
 class BDSearchTool(BaseTool):
     name: str = "BD Search Tool"  
@@ -160,24 +140,74 @@ class BDSearchTool(BaseTool):
             if 'connection' in locals():
                 connection.close()
 
-class CourseRootTool(BaseTool):
-    name: str = "Course root" 
-    description: str = "Busca la lista de cursos disponibles en la base de datos PostgreSQL y devuelve una lista estructurada."
+class CourseRootTool_names(BaseTool):
+    name: str = "Course root"
+    description: str = "Busca los cursos relevantes según la necesidad del usuario desde la base de datos PostgreSQL."
 
-    def _run(self) -> dict:
-        """Ejecuta la consulta en la base de datos para obtener cursos disponibles."""
+    def _run(self) -> str:
         try:
             connection = psycopg2.connect(DATABASE_URL)
             cursor = connection.cursor()
 
-            query = "SELECT title, description FROM courses;"
+            query = """
+                SELECT title 
+                FROM courses 
+                
+            """
+            
             cursor.execute(query)
             results = cursor.fetchall()
 
-            return [{"curso": row[0], "descripcion": row[1]} for row in results] if results else []
+            if not results:
+                return "Nn"
+
+            output = "Cursos sugeridos:\n\n"
+            for i, (title,) in enumerate(results, 1):
+                output += f"{i}. {title}\n\n"
+
+            return output.strip()
 
         except Exception as e:
-            return {"error": str(e)}
+            return f"Error al acceder a la base de datos: {str(e)}"
+
+        finally:
+            if 'cursor' in locals():
+                cursor.close()
+            if 'connection' in locals():
+                connection.close()
+
+class CourseRootTool_descriptions(BaseTool):
+    name: str = "Course root descriptions"
+    description: str = "Obtiene las descripciones completas de una lista de títulos de cursos desde la base de datos."
+
+    def _run(self, courses_names: str) -> str:
+        try:
+            # Convertir string plano en lista si hace falta
+            titles = [t.strip() for t in courses_names.split(",") if t.strip()]
+
+            if not titles:
+                return "Nn"
+
+            connection = psycopg2.connect(DATABASE_URL)
+            cursor = connection.cursor()
+
+            placeholders = ', '.join(['%s'] * len(titles))
+            query = f"SELECT title, description FROM courses WHERE title IN ({placeholders})"
+
+            cursor.execute(query, tuple(titles))
+            results = cursor.fetchall()
+
+            if not results:
+                return "Nn"
+
+            output = "Cursos seleccionados:\n\n"
+            for i, (title, desc) in enumerate(results, 1):
+                output += f"{i}. {title}\nDescripción: {desc}\n\n"
+
+            return output.strip()
+
+        except Exception as e:
+            return f"Error al acceder a la base de datos: {str(e)}"
 
         finally:
             if 'cursor' in locals():
