@@ -6,8 +6,7 @@ from tools.custom_tools import BDSearchTool
 from crewai_tools import PDFSearchTool
 import sys
 import os
-from crewai.memory import LongTermMemory
-from crewai.memory.storage.ltm_sqlite_storage import LTMSQLiteStorage
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from config import llm
 from tools.memory import MemoryManager
@@ -77,7 +76,7 @@ manager = Agent(
     goal="Coordinar el flujo de información y responder preguntas basadas en la información extraída.",
     backstory="Eres un experto en gestión del conocimiento y síntesis de información.",
     max_iter=3,
-    memory = True,
+    # memory = True,
 
 )
 
@@ -89,12 +88,12 @@ crew_guia_cursos = Crew(
     manager_agent=manager,  # Manager supervisa el proceso y entrega la respuesta final
     cache=True,
     llm=llm,
-    memory= True,
-    long_term_memory = LongTermMemory(
-        storage=LTMSQLiteStorage(
-            db_path="/my_crew1/long_term_memory_storage.db"
-        )
-    ),
+    # memory= True,
+    # long_term_memory = LongTermMemory(
+    #     storage=LTMSQLiteStorage(
+    #         db_path="/my_crew1/long_term_memory_storage.db"
+    #     )
+    # ),
 )
 
 

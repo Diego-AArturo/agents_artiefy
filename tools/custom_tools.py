@@ -192,7 +192,7 @@ class CourseRootTool_descriptions(BaseTool):
             cursor = connection.cursor()
 
             placeholders = ', '.join(['%s'] * len(titles))
-            query = f"SELECT title, description FROM courses WHERE title IN ({placeholders})"
+            query = f"SELECT id, title, description FROM courses WHERE title IN ({placeholders})"
 
             cursor.execute(query, tuple(titles))
             results = cursor.fetchall()
@@ -201,8 +201,8 @@ class CourseRootTool_descriptions(BaseTool):
                 return "Nn"
 
             output = "Cursos seleccionados:\n\n"
-            for i, (title, desc) in enumerate(results, 1):
-                output += f"{i}. {title}\nDescripción: {desc}\n\n"
+            for i, (course_id, title, desc) in enumerate(results, 1):
+                output += f"{i}. ID: {course_id} - {title}\nDescripción: {desc}\n\n"
 
             return output.strip()
 

@@ -1,15 +1,13 @@
 import requests
 
 # URL de la API
-url = "http://127.0.0.1:5000/plan_project"
+url = "http://127.0.0.1:5000/chat"
 
 # Datos en formato JSON
 data = {
-    "project_type": "Website",
-    "project_requirements": "Crear una web responsiva",
-    "project_objectives": "Tener una presencia digital",
-    "team_members": "Diego, Laura",
-    "industry": "Tecnología"
+    "user_id": "123",
+    "user_message": "¿Qué es una metodología ágil?",
+    "curso": "Gestión de proyectos"
 }
 
 # Enviar solicitud POST con JSON
