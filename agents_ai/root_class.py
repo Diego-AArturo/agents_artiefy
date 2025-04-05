@@ -48,7 +48,7 @@ task_buscar_cursos = Task(
 #  Tarea 2: Analizar y clasificar los cursos encontrados
 task_analizar_cursos = Task(
     description="Analizar y clasificar los cursos según su descripcion y relevancia para el usuario. Solo devolver los 5 cursos más relevantes.Estos cursos deben estar en la base de datos. si no hay cursos relevantes, devolver 'Nn'.",
-    expected_output="Lista solo con los id y los titulos o nombres de los 5 cursos más relevantes.",
+    expected_output="Lista solo con los id respectivos a los titulos o nombres de los 5 cursos más relevantes.",
     agent=analista_de_cursos,
     output_pydantic=EventOutput
 )

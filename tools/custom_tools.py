@@ -15,6 +15,7 @@ from fpdf import FPDF
 import shutil
 from config import DOWNLOAD_FOLDER,PDF_FOLDER, DATABASE_URL, aws
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+from typing import List
 import sqlite3
 import json
 
@@ -180,10 +181,9 @@ class CourseRootTool_descriptions(BaseTool):
     name: str = "Course root descriptions"
     description: str = "Obtiene las descripciones completas de una lista de títulos de cursos desde la base de datos."
 
-    def _run(self, courses_names: str) -> str:
+    def _run(self, courses_names: List[str]) -> str:
         try:
-            # Convertir string plano en lista si hace falta
-            titles = [t.strip() for t in courses_names.split(",") if t.strip()]
+            titles = [t.strip() for t in courses_names if t.strip()]
 
             if not titles:
                 return "Nn"
@@ -202,8 +202,8 @@ class CourseRootTool_descriptions(BaseTool):
 
             output = "Cursos seleccionados:\n\n"
             for i, (course_id, title, desc) in enumerate(results, 1):
-                output += f"{i}. ID: {course_id} - {title}\nDescripción: {desc}\n\n"
-
+                output += f"id: {course_id} - {title}\nDescripción: {desc}\n\n"
+            
             return output.strip()
 
         except Exception as e:
